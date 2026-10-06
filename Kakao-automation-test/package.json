@@ -1,0 +1,30 @@
+{
+  "name": "kakao-automation-test",
+  "version": "1.0.0",
+  "description": "Web UI Automation Framework - Playwright + TypeScript",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "cross-env HEADLESS=false playwright test --headed",
+    "test:headless": "cross-env HEADLESS=true playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "report:html": "playwright show-report reports/html",
+    "report:allure:open": "node scripts/open-allure-report.js",
+    "report:allure:list": "node scripts/open-allure-report.js --list",
+    "tokens:keep-alive": "node scripts/keep-tokens-alive.js",
+    "tokens:keep-alive:watch": "node scripts/keep-tokens-alive.js --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "allure-commandline": "^2.32.0",
+    "allure-playwright": "^3.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.24.5",
+    "typescript": "^5.7.0",
+    "winston": "^3.17.0"
+  }
+}

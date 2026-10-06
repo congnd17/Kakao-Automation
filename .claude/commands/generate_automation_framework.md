@@ -142,7 +142,7 @@ Workflow này giúp agent thiết kế, scaffold và triển khai một automati
 
 4. **Base Test class:**
    - Setup: khởi tạo browser/driver, navigate to baseURL
-   - Teardown: attach screenshot trạng thái cuối cho **MỌI** test (PASS → `trang_thai_cuoi_cua_test`, FAIL → `trang_thai_khi_that_bai`), rồi đóng browser/driver
+   - Teardown: attach screenshot trạng thái cuối cho **MỌI** test (PASS → `final_state`, FAIL → `state_at_failure`), rồi đóng browser/driver
    - Test lifecycle hooks (beforeAll, afterAll, beforeEach, afterEach)
 
 5. **Utilities:**
@@ -195,9 +195,9 @@ Workflow này giúp agent thiết kế, scaffold và triển khai một automati
 
    **Chuẩn report BẮT BUỘC** — tuân thủ `.claude/rules/reporting_rules.md`:
 
-   - **Metadata:** framework phải hỗ trợ khai báo tên test Tiếng Việt, Description, Severity, Tags, label `testId`
+   - **Metadata:** framework phải hỗ trợ khai báo tên test Tiếng Anh, Description, Severity, Tags, label `testId`
    - **Step API:** Base Page/Screen đánh dấu step (`@Step` / `test.step` / `@allure.step`) → sub-step tự sinh trong Test Body
-   - **Screenshot:** teardown attach ảnh trạng thái cuối cho **MỌI** test — `trang_thai_cuoi_cua_test` (PASS) / `trang_thai_khi_that_bai` (FAIL). KHÔNG chỉ chụp khi fail
+   - **Screenshot:** teardown attach ảnh trạng thái cuối cho **MỌI** test — `final_state` (PASS) / `state_at_failure` (FAIL). KHÔNG chỉ chụp khi fail
    - **Tắt stdout:** pytest thêm `--allure-no-capture` vào `addopts`; Playwright TS để `screenshot: 'off'` (attach thủ công ở `afterEach`, tránh đính 2 lần)
    - Example test sinh ở Bước 4 phải **demo đủ** các mục trên để làm mẫu cho test sau
 
@@ -270,7 +270,7 @@ Workflow này giúp agent thiết kế, scaffold và triển khai một automati
    - [ ] Example test chạy được (hoặc chạy được khi có app)
    - [ ] README.md hướng dẫn đầy đủ
    - [ ] .gitignore bao phủ đúng
-   - [ ] Reporting tích hợp — mở report kiểm: tên test Tiếng Việt, Description, Severity, Tags, TC ID
+   - [ ] Reporting tích hợp — mở report kiểm: tên test Tiếng Anh, Description, Severity, Tags, TC ID
    - [ ] Test Body có step `Arrange:` / `Act:` / `Assert:`, không phẳng
    - [ ] Có ảnh cuối test cho **cả** PASS lẫn FAIL; **không** có attachment `stdout`
    - [ ] Toàn bộ output nằm trong `reports/` — root project sạch, không có `allure-results/` / `test-results/` / `playwright-report/` lạc ra ngoài

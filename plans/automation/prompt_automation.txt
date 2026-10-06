@@ -28,8 +28,8 @@ Bạn là Senior Automation Engineer với 10 năm kinh nghiệm. Hãy tự đ�
 
 === THÔNG TIN MÔI TRƯỜNG ===
 
-- URL: [Ví dụ: https://app.anhtester.com/login]
-- Tài khoản Test: [Ví dụ: admin@anhtester.com / Admin@123]
+- URL: [Ví dụ: https://app.example.com/login]
+- Tài khoản Test: [Ví dụ: admin@example.com / Admin@123]
 - Trình duyệt: [Chrome / Firefox / Edge -- mặc định Chromium]
 
 === KIẾN TRÚC PROJECT ===
@@ -52,7 +52,7 @@ TC_LOGIN_001: Đăng nhập thành công với tài khoản hợp lệ
 - Tiền điều kiện: User đã có tài khoản active
 - Các bước:
   1. Mở trang Login
-  2. Nhập email: admin@anhtester.com
+  2. Nhập email: admin@example.com
   3. Nhập password: Admin@123
   4. Click nút Sign In
 - Kết quả mong đợi: Chuyển hướng sang Dashboard, hiển thị tên user Admin
@@ -61,7 +61,7 @@ TC_LOGIN_002: Đăng nhập thất bại với password sai
 - Tiền điều kiện: User đã có tài khoản active
 - Các bước:
   1. Mở trang Login
-  2. Nhập email: admin@anhtester.com
+  2. Nhập email: admin@example.com
   3. Nhập password sai: WrongPassword
   4. Click nút Sign In
 - Kết quả mong đợi: Hiển thị thông báo lỗi Invalid credentials

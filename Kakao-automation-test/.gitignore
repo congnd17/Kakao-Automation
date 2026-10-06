@@ -1,0 +1,20 @@
+node_modules/
+dist/
+
+# Env — không commit credentials thật
+.env
+
+# Toàn bộ output test (report, log, screenshot...) gom trong reports/
+reports/
+
+# Playwright runtime
+/test-results/
+/playwright-report/
+/playwright/.cache/
+.playwright-mcp/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

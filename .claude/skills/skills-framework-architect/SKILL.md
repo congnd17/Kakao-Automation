@@ -99,15 +99,17 @@ Mỗi framework PHẢI bao gồm các thành phần sau (tùy chỉnh theo stack
 
 ### 7. Utilities (Mandatory)
 - Wait helpers (smart waits, custom conditions)
-- Screenshot utilities (capture cuối MỌI test — cả PASS lẫn FAIL)
+- Screenshot utilities: (1) helper chụp + attach ảnh ngay sau mỗi step Arrange/Act/Assert ở tầng test
+  (Playwright TS: `src/utils/step.ts` xuất `makeStep(page)`, dùng thay cho gọi `test.step()` trực tiếp);
+  (2) capture cuối MỌI test — cả PASS lẫn FAIL, đặt trong fixture/teardown dùng chung
 - Logger (structured logging, không dùng print/console.log)
 - Date/Time helpers, String generators
 
 ### 8. Reporting (Mandatory)
 - Tích hợp ít nhất 1 reporting tool (Allure ưu tiên)
-- **Metadata mỗi test:** tên Tiếng Việt · Description · Severity · Tags · label `testId`
+- **Metadata mỗi test:** tên Tiếng Anh · Description · Severity · Tags · label `testId`
 - **Test Body có step** `Arrange:` / `Act:` / `Assert:` — Base Page dùng step API để sinh sub-step
-- **Screenshot attach cuối MỌI test** — cả PASS lẫn FAIL, không chỉ khi fail
+- **Screenshot attach sau MỖI step Arrange/Act/Assert** (qua `makeStep`/tương đương) **cộng thêm** 1 ảnh cuối MỌI test — cả PASS lẫn FAIL, không chỉ khi fail
 - **KHÔNG** attachment `stdout` / `stderr`
 - Test execution summary (pass/fail/skip counts)
 

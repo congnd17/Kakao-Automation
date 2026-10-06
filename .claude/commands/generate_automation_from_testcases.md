@@ -193,6 +193,7 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
    ```
 
 2. **Assertions bắt buộc:**
+   - **Lập bảng phủ trước khi code** (`automation_rules.md` mục 6.1): tách từng dòng Expected thành các ý → mỗi ý có assertion + locator đã verify, hoặc ghi *Not automated*. "Every X" → assert từng X theo tên; "not clipped / no overflow / fits viewport" → kiểm hình học, không chỉ `toBeVisible()`. TC lệch UI → báo user. Refactor không bê assertion cũ sang.
    - Mỗi TC PHẢI có ít nhất 1 assertion
    - Assert message mô tả rõ: `"Expected dashboard to show after login"`
    - Dùng soft assertions khi cần check nhiều điểm
@@ -211,21 +212,26 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
 
    | Mục | Nguồn lấy từ manual TC |
    |---|---|
-   | **Tên test** (Tiếng Việt) | Tiêu đề của TC — KHÔNG dùng tên hàm làm tên hiển thị |
+   | **Tên test** (Tiếng Anh) | Tiêu đề của TC — KHÔNG dùng tên hàm làm tên hiển thị |
    | **Description** | Mục tiêu / Điều kiện tiên quyết của TC |
    | **Severity** | Mức độ ưu tiên của TC (`blocker`/`critical`/`normal`/`minor`) |
    | **Tags** | Nhóm chạy (`smoke`, `regression`) + tên module |
    | **TC ID** | Mã TC gốc, gắn qua label `testId` → phục vụ RTM |
 
-   - **Test Body:** bọc mỗi giai đoạn bằng step có tên Tiếng Việt — `Arrange: ...` / `Act: ...` / `Assert: ...`. Mapping 1-1: mỗi **Step** trong manual TC → 1 step trong report.
+   - **Test Body:** bọc mỗi giai đoạn bằng step có tên Tiếng Anh — `Arrange: ...` / `Act: ...` / `Assert: ...`. Mapping 1-1 theo **từng gạch đầu dòng** của TC: Pre-condition → `Arrange: Pre-condition N — …`, dòng Steps N → `Act: Step N — …`, dòng Expected N → `Assert: Expected N — …` đặt ngay sau `Act: Step N`; message `expect` có tiền tố `[Expected N]`; **cấm** step gộp `Act & Assert`. Số step `Act`/`Assert` top-level **bằng đúng** số dòng Steps/Expected — dòng đi qua nhiều màn hình dùng mẫu ghi nhận trong Act → assert trong Assert (`src/utils/observations.ts`), không tách cặp, không thêm step cleanup top-level. Chi tiết: `reporting_rules.md` mục 2 → *Mapping 1-1 với gạch đầu dòng của manual TC*.
    - **Method của Page Object** đánh dấu step API (`@Step` / `test.step` / `@allure.step`) để sinh sub-step tự động.
-   - **Screenshot:** đính kèm ảnh trạng thái cuối trong teardown cho **MỌI** test — PASS đặt tên `trang_thai_cuoi_cua_test`, FAIL đặt `trang_thai_khi_that_bai`.
+   - **Screenshot:** đính kèm ảnh ngay sau **MỖI** step Arrange/Act/Assert vừa chạy xong (đặt tên theo tên step) — Playwright TS dùng helper `src/utils/step.ts` (`makeStep(page)`) thay cho gọi `test.step()` trực tiếp trong file test; Selenium/Appium/pytest dùng cơ chế tương đương theo bảng API ở `reporting_rules.md` mục 5. **Cộng thêm** 1 ảnh trạng thái cuối trong teardown cho **MỌI** test — PASS đặt tên `final_state`, FAIL đặt `state_at_failure`.
    - **KHÔNG** để report sinh attachment `stdout` / `stderr` (pytest: thêm `--allure-no-capture`).
    - **Output gom vào `reports/`:** allure-results · allure-report · allure-report-single · html · logs · screenshots. Nếu project đã có framework, tuân theo cấu hình sẵn có; nếu output đang rải ở root thì gom lại.
+   - **Tự sinh report sau mỗi lần chạy:** config phải tự generate `allure-report/` + `allure-report-single/` khi chạy xong (Playwright TS: reporter `src/reporters/allure-generate.reporter.ts`); chạy test **không** kèm `--reporter=...`. Chi tiết: `reporting_rules.md` mục 6 → *Tự sinh report sau MỌI lần chạy*.
 
    Chi tiết bắt buộc: `.claude/rules/reporting_rules.md`.
 
 ### Bước 6: Chạy Thử Nghiệm & Tự Sửa Lỗi (Execution & Auto-Heal — RULE E3)
+
+> ⚠️ **Script All → Run All (CLAUDE.md, BẮT BUỘC):** chỉ vào Bước 6 khi **mọi** TC trong file đã có script (tự động
+> hoá hoặc skip kèm lý do) và `tsc` + `--list` đã sạch (số TC khớp file, không trùng ID). Lần chạy đầu là **toàn bộ
+> suite của module**, sau khi user xác nhận — không chạy từng spec / `--grep` lẻ trong lúc còn đang viết script.
 
 1. **Chạy test** bằng `run_command`:
    ```bash

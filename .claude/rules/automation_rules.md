@@ -21,6 +21,11 @@
   Ví dụ:  auto_createCustomer_20260402_A3F2@test.com
   ```
 - Hỗ trợ chạy parallel: mỗi test method có data riêng biệt, không conflict.
+- **Tài khoản đăng nhập:** KHÔNG hardcode username/email/tên hiển thị của account test trong script (locator,
+  assertion, filter, description). Tên account phải đọc từ nguồn đăng nhập **lúc chạy** — token/session hoặc config
+  `.env` — và gọi trong thân test (sau bước setup đăng nhập), không gọi lúc nạp file.
+  - Playwright TS: `getAccountDisplayName(role)` (`src/utils/auth-token.ts`) — `role` = `submitter` / `approver`…
+  - Lý do: account test đổi theo môi trường/đợt test; tên ghi cứng làm fail hàng loạt dù logic test không sai.
 
 ## 3. Chất Lượng Code
 
@@ -73,9 +78,55 @@
   await expect(page.getByText('Đăng nhập thành công')).toBeVisible();
   ```
 
+### 6.1 Độ Phủ Assertion Theo Expected Results (BẮT BUỘC khi có TC nguồn)
+
+> Nguyên tắc: **mọi ý** trong dòng Expected của TC phải có assertion tương ứng — hoặc được ghi rõ là *Not automated*.
+> Không ý nào được "biến mất" lặng lẽ giữa TC và code.
+
+**Bước 1 — Lập bảng phủ (coverage map) TRƯỚC khi viết assertion.** Tách từng dòng Expected thành các ý
+(danh từ + điều kiện) và map mỗi ý → assertion → locator đã verify:
+
+| Expected | Ý trong TC | Assertion | Locator (đã verify) |
+|---|---|---|---|
+| 1 | "every table column" | 7 `columnheader` theo **tên** | `list.columnHeader(name)` |
+| 1 | "the pager" | total text + 페이지당 + Next + Last | `pagerTotalText`, `pageSizeSelect`… |
+| 1 | "hints under the fields are not clipped" | mỗi hint: visible **và** không bị cắt | `pgHint`… + `isClipped()` |
+| 2 | "long text shows a tooltip" | — | *Not automated* (ghi trong description) |
+
+Bảng này không cần commit, nhưng **phải trình bày cho user** khi báo cáo nếu có ý Not automated hoặc lệch UI.
+
+**Bước 2 — Quy tắc chuyển ý → assertion:**
+
+| Cách TC diễn đạt | ❌ Assertion thiếu | ✅ Assertion đủ |
+|---|---|---|
+| "every / all X" (mọi cột, mọi field, mọi hint) | 1 assertion trên **container** (`table` visible) | **liệt kê từng X theo tên/nhãn** thật trên UI, assert từng cái |
+| Nhóm có tên (pager, footer row, panel) | 1 phần tử đại diện | **mọi phần tử con** hiển thị trong nhóm đó |
+| TC **liệt kê option** (các nút `뒤로 · 확인 및 저장`, các cột, các mã, các giá trị) | kiểm số lượng (`headers.length === 5`) hoặc 1 option | **1 assertion cho MỖI option** theo đúng tên TC/UI — số assertion ≥ số option liệt kê |
+| Khối nội dung có tên ("the 변경 내용 block") | chỉ kiểm dialog mở | assert **từng thành phần** của khối (nhãn, giá trị cũ, giá trị mới…) |
+| "fully visible" / "not clipped / cut off" | chỉ `toBeVisible()` | `toBeVisible()` **+** kiểm không bị cắt (`scrollWidth/Height ≤ clientWidth/Height`) |
+| "does not overflow its container" | chỉ `toBeVisible()` | bounding box nằm trong khung chứa |
+| "not pushed out of sight" / "fits in the viewport" | chỉ `toBeVisible()` | nằm trong viewport (`toBeInViewport()` hoặc so bounding box) |
+| "no horizontal scrollbar" | — | `scrollWidth ≤ clientWidth` của `documentElement` |
+| "clickable" | chỉ `toBeVisible()` | `toBeVisible()` + `toBeEnabled()` (+ trong viewport nếu TC nói về layout) |
+| Giá trị / nội dung cụ thể | chỉ kiểm tồn tại | `toHaveText` / `toHaveValue` đúng giá trị TC ghi |
+
+- Ý **cảm quan** không đo được (đọc được, không chồng lấn, bố cục đẹp, tooltip…) → *Not automated*: ghi vào
+  `description` của test + nêu trong báo cáo cho user. **CẤM** thay bằng assertion yếu rồi coi như đã phủ.
+- UI **có điều kiện** (field chỉ hiện khi WEEKLY…) → đọc trạng thái thật rồi assert theo nhánh, ghi rõ điều kiện
+  trong code comment; không hardcode nhánh theo dữ liệu seed có thể bị đổi.
+
+**Bước 3 — TC lệch UI thật:** số lượng/tên phần tử trên UI khác TC (VD TC ghi "three filters", UI có 4) →
+assert đúng những gì **TC gọi tên**, **KHÔNG** tự ý sửa kỳ vọng cho khớp UI, và **báo user** để BA xác nhận.
+
+**Bước 4 — Refactor / viết lại script:** **KHÔNG** bê nguyên assertion của code cũ sang — phải dựng lại bảng phủ
+từ TC. Code cũ PASS không chứng minh nó phủ đủ TC.
+
+**Bước 5 — Tự review trước khi xin chạy:** đọc lại từng dòng Expected, chỉ ra assertion nào phủ từng ý. Còn ý nào
+không có assertion và cũng không được ghi *Not automated* = **chưa xong**, không được xin chạy test.
+
 ## 7. Report
 
-Mọi script sinh ra phải tuân thủ [`reporting_rules.md`](reporting_rules.md): tên test Tiếng Việt, Description/Severity/Tags/TC ID, step `Arrange`/`Act`/`Assert` trong Test Body, screenshot cuối **mọi** test (cả PASS), KHÔNG attachment `stdout`.
+Mọi script sinh ra phải tuân thủ [`reporting_rules.md`](reporting_rules.md): tên test + nội dung report bằng Tiếng Anh, Description/Severity/Tags/TC ID, step `Arrange`/`Act`/`Assert` trong Test Body (map 1-1 với dòng Steps/Expected của TC), screenshot cuối **mọi** test (cả PASS), KHÔNG attachment `stdout`.
 
 ## 8. Tính Độc Lập Của Test (Test Independence)
 

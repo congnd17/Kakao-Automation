@@ -5,6 +5,36 @@
 
 ---
 
+## Test Run Confirmation Rule (MANDATORY)
+
+* **KHÔNG** tự chạy test khi chưa được user xác nhận — áp dụng cho **mọi** lệnh thực thi test: `npx playwright test`, `npm test`, `mvn test`, chạy lại sau khi self-fix, chạy lần 2 để xác nhận ổn định, chạy thử 1 test lẻ.
+* Trước mỗi lần chạy, hỏi user và nêu rõ:
+  - **Lệnh** sẽ chạy và **phạm vi** (file / `--grep` / project)
+  - **Tác động dữ liệu**: test nào tạo/sửa dữ liệu trên môi trường (đặc biệt môi trường dùng chung)
+  - **Mục đích**: debug, xác nhận fix, hay lần PASS thứ 2 theo Definition of Done
+* Chỉ chạy sau khi user đồng ý **cho đúng lần chạy đó** — xác nhận 1 lần không áp dụng cho các lần chạy sau.
+* **Được phép** không cần hỏi: `npx tsc --noEmit`, `playwright test --list` (không thực thi test).
+* Chạy test **luôn** giữ reporter trong config — **CẤM** cờ `--reporter=...` hay tương đương. Mọi lần chạy phải tự sinh `reports/allure-report/` + `reports/allure-report-single/`; kiểm log có dòng xác nhận sinh report trước khi báo kết quả (xem `reporting_rules.md` mục 6 → *Tự sinh report sau MỌI lần chạy*).
+* Rule này **ghi đè** mọi bước "chạy test ngay / tự chạy lại" trong workflows, skills và phần Execution bên dưới.
+
+---
+
+## Script All → Run All Rule (MANDATORY)
+
+Khi sinh automation từ một file test case (hoặc một module), **viết xong script cho TOÀN BỘ TC trước, rồi mới chạy toàn bộ suite một lần**.
+
+1. **Script hết:** mọi TC trong file đều phải có test tương ứng — hoặc tự động hoá, hoặc `skip` kèm lý do rõ ràng trong report (thiếu quyền, thiếu dữ liệu, cần DB…). Không để TC nào "chưa viết".
+2. **Kiểm tĩnh:** `npx tsc --noEmit` + `playwright test --list` — xác nhận số TC trong `--list` khớp số TC trong file, không trùng TC ID.
+3. **Xin xác nhận một lần** (theo *Test Run Confirmation Rule*) rồi chạy **toàn bộ** suite của module.
+4. **Sau lần chạy:** phân loại từng FAIL (lỗi script / issue thật / lệch TC–UI / môi trường) → sửa script → xin xác nhận → chạy lại.
+
+* **CẤM** trong lúc còn đang viết script: chạy từng spec lẻ, `--grep` một phần, hay spec "recon/probe" tạm để thử.
+* Inspect DOM trước khi code (MCP / snapshot, **không lưu dữ liệu**) vẫn bắt buộc — đó là khảo sát, không phải chạy suite.
+* Lý do: chạy lẻ giữa chừng làm tốn thời hạn token phiên, ghi dữ liệu thừa lên môi trường dùng chung và sinh report rời rạc khó đọc.
+* Rule này **ghi đè** các bước "code xong 1 TC → chạy thử ngay" trong workflows / skills.
+
+---
+
 ## Git Pull Restriction Rule
 
 * Tuyệt đối KHÔNG dùng lệnh GIT làm thay đổi trạng thái code (như `git pull`, `git checkout`, `git merge`, `git rebase`, `git reset`) để lấy code hoặc thay đổi nhánh.
@@ -91,6 +121,7 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 
 - [ ] Test **PASS ổn định** ít nhất **2 lần liên tiếp** trên UI (headed mode)
 - [ ] Assertion có message rõ ràng, dễ debug khi fail
+- [ ] Có TC nguồn → **mọi ý** trong từng dòng Expected có assertion tương ứng hoặc ghi *Not automated*; "every X" và mọi option TC liệt kê → assert từng cái theo tên; TC lệch UI đã báo user (xem `automation_rules.md` mục 6.1)
 - [ ] Mỗi test case độc lập — không phụ thuộc thứ tự chạy
 - [ ] Test data được sinh động (timestamp/random) và traceable
 
@@ -98,11 +129,13 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 
 > Chi tiết: [`.claude/rules/reporting_rules.md`](.claude/rules/reporting_rules.md)
 
-- [ ] Tên test hiển thị bằng **Tiếng Việt** mô tả hành vi — KHÔNG phải tên hàm
+- [ ] Tên test hiển thị bằng **Tiếng Anh** mô tả hành vi — KHÔNG phải tên hàm (toàn bộ nội dung report bằng Tiếng Anh)
 - [ ] Có **Description**, **Severity**, **Tags**, **TC ID** cho mỗi test
 - [ ] Test Body có step `Arrange:` / `Act:` / `Assert:` đọc hiểu được, không phẳng
+- [ ] Có TC nguồn → số step `Act`/`Assert` **bằng đúng** số dòng Steps/Expected của TC: `Act: Step N — …` rồi `Assert: Expected N — …`, không gộp `Act & Assert`, không thêm step top-level ngoài TC
 - [ ] Có screenshot đính kèm ở cuối **MỌI** test — cả PASS lẫn FAIL
 - [ ] **KHÔNG** có attachment `stdout` / `stderr` trong report
+- [ ] Mỗi lần chạy tự sinh `allure-report/` + `allure-report-single/` qua config (không override reporter trên CLI)
 - [ ] Toàn bộ output report gom trong **`reports/`** — root project sạch, `.gitignore` đã chặn `reports/`
 
 #### 📁 File Output
@@ -129,7 +162,7 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 
 - **Recon (Điều tra):** Luôn inspect giao diện thực tế hoặc DOM/HTML/XML trước khi viết automation. Tuyệt đối KHÔNG ĐOÁN locator.
 - **Implementation:** Giữ vững mô hình **Page Object Model (POM)**. Phân tách rõ Page objects, Test execution và Utils/Test data.
-- **Execution & Self-fix:** Chạy test ngay sau khi code xong. Nếu test FAIL → tự đọc log → phân tích root cause → sửa code → chạy lại → đến khi PASS ổn định. Chỉ hỏi User khi gặp business rule mâu thuẫn.
+- **Execution & Self-fix:** Code xong → **xin user xác nhận rồi mới chạy test** (xem *Test Run Confirmation Rule*). Nếu test FAIL → tự đọc log → phân tích root cause → sửa code → **xin xác nhận** → chạy lại → đến khi PASS ổn định. Chỉ hỏi User về nghiệp vụ khi gặp business rule mâu thuẫn.
 - **Cleanup:** Gỡ bỏ debug logs, code thừa, locator không dùng trước khi deliver.
 
 ## 3. Tech Stack Hỗ Trợ
@@ -148,7 +181,7 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 Agent phải tham chiếu quy tắc chi tiết trong `.claude/rules/`:
 
 - [Quy tắc chung Automation](.claude/rules/automation_rules.md) — POM, Test Data, Naming, Assertions
-- [Quy tắc Report (Allure)](.claude/rules/reporting_rules.md) — Metadata test, step Tiếng Việt, screenshot, cấm stdout
+- [Quy tắc Report (Allure)](.claude/rules/reporting_rules.md) — Metadata test, report Tiếng Anh, screenshot, cấm stdout
 - [Chiến lược chọn Locator](.claude/rules/locator_strategy.md) — Thứ tự ưu tiên locator
 - [Quy tắc Playwright](.claude/rules/playwright_rules.md) — Browser setup, locator semantic, wait strategy
 - [Quy tắc Selenium](.claude/rules/selenium_rules.md) — WebDriverWait, TestNG structure
@@ -237,7 +270,7 @@ rm -rf docs .playwright-mcp task.md .claude/settings.local.json
 | | |
 |---|---|
 | **Xoá** | `docs/` · `.playwright-mcp/` · `task.md` · `.claude/settings.local.json` |
-| **Giữ nguyên** | `.claude/` (trừ `settings.local.json`) · `plans/` · `prompt_templates/` · `CLAUDE.md` · `README.md` · `LICENSE` · `.gitignore` — khung dùng lại được, không hardcode hệ thống nào |
+| **Giữ nguyên** | `.claude/` (trừ `settings.local.json`) · `plans/` · `prompt_templates/` · `CLAUDE.md` · `README.md` · `.gitignore` — khung dùng lại được, không hardcode hệ thống nào |
 
 ⚠️ **`.claude/settings.local.json`** là permission tích luỹ theo từng máy/phiên, thường chứa đường dẫn tuyệt đối của dự án cũ. Đã đưa vào `.gitignore` — nếu file còn bị git theo dõi từ trước, gỡ bằng: `git rm --cached .claude/settings.local.json`
 
@@ -292,7 +325,7 @@ code:     TC_LOGIN_1712049200
 | Guess selector / đoán locator                   | Inspect DOM thực tế trước khi code         |
 | Hard sleep (`waitForTimeout`, `Thread.sleep`) | Smart waits (`expect()`, `WebDriverWait`)  |
 | Copy selector từ code cũ không verify          | Luôn verify selector trên browser hiện tại |
-| Viết test không chạy ngay                      | Chạy test ngay sau khi implement              |
+| Viết test không chạy                           | Chạy test sau khi implement — **có user xác nhận** |
 | Commit test FAIL                                  | Chỉ commit khi test PASS ổn định           |
 | Để debug log / commented code khi deliver       | Cleanup trước khi deliver                    |
 | Dùng test data hardcoded trùng lặp             | Sinh data random + traceable                   |

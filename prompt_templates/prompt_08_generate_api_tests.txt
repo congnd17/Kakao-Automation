@@ -1,7 +1,7 @@
 /generate_api_tests_from_swagger
 
 # CONTEXT
-- Base URL: [Ví dụ: https://api.anhtester.com/v1]
+- Base URL: [Ví dụ: https://api.example.com/v1]
 - Authentication: [Bearer Token / Basic Auth / API Key / OAuth2]
 - Swagger URL (nếu có): [URL Swagger]
 - Mode: [SPEC (chỉ test cases) / FULL (test cases + automation scripts)]
